@@ -177,12 +177,12 @@ app.post('/buy',function(req,res){
             var tJson = JSON.parse(body);
             fs.writeFileSync("temp/"+ticker+'.json', JSON.stringify(tJson));
             var obj;
-            fs.readFile('temp/'+ticker+".json", 'utf8', function (err, data) {
+            fs.readFile('daily/'+ticker+".json", 'utf8', function (err, data) {
                  if (err) throw err;
                  obj = JSON.parse(data);
-                 var date=obj["Meta Data"]["3. Last Refreshed"];
-                 obj=obj["Time Series (1min)"][date];
-                 var price=obj["4. close"];
+                 var date=obj["Meta Data"]["6. Last Refreshed"];
+                 obj=obj["Time Series (Digital Currency Daily)"][date];
+                 var price=obj["4a. close (INR)"];
                  price=parseFloat(price);
                  user.findByUsername(acc,function(data){
                     balance=balance+price*qty;
@@ -231,18 +231,18 @@ app.post('/sell',function(req,res){
             var tJson = JSON.parse(body);
             fs.writeFileSync("temp/"+ticker+'.json', JSON.stringify(tJson));
             var obj;
-            fs.readFile('temp/'+ticker+".json", 'utf8', function (err, data) {
+            fs.readFile('daily/'+ticker+".json", 'utf8', function (err, data) {
                  if (err) throw err;
                  obj = JSON.parse(data);
-                 var date=obj["Meta Data"]["3. Last Refreshed"];
-                 obj=obj["Time Series (1min)"][date];
-                 var price=obj["4. close"];
+                 var date=obj["Meta Data"]["6. Last Refreshed"];
+                 obj=obj["Time Series (Digital Currency Daily)"][date];
+                 var price=obj["4a. close (INR)"];
                  price=parseFloat(price);
                  user.findByUsername(acc,function(data){
                     var balance=parseFloat(data.balance);
                     balance=balance-price*qty;
                     balance=parseFloat(balance).toFixed(2);
-                    stock.findByUandS(acc,ticker,obj['4. close'],function(data,price){
+                    stock.findByUandS(acc,ticker,obj['4a. close (INR)'],function(data,price){
                         if(data == null){
                             hold.status(305);
                             hold.send("You do not have stocks of this company");
@@ -318,8 +318,8 @@ app.get('/watchlist',function(req,res,next){
                       if (err) throw err;
                       obj = JSON.parse(data);
                       var symbol=obj["Meta Data"]["2. Symbol"]; 
-                      var date=obj["Meta Data"]["3. Last Refreshed"];
-                      obj=obj["Time Series (Daily)"];
+                      var date=obj["Meta Data"]["6. Last Refreshed"];
+                      obj=obj["Time Series (Digital Currency Daily)"];
                       var count=0;
                       var obj2;
                       for(var date2 in obj){
@@ -338,7 +338,7 @@ app.get('/watchlist',function(req,res,next){
                               ud.push(false);
                           }
                       }
-                      var stock={"ticker":symbol,"open":{"data":parseFloat(obj['1. open']).toFixed(2),"ud":ud[0]},"close":{"data":parseFloat(obj['4. close']).toFixed(2),"ud":ud[3]},"high":{"data":parseFloat(obj['2. high']).toFixed(2),"ud":ud[1]},"low":{"data":parseFloat(obj['3. low']).toFixed(2),"ud":ud[2]}};
+                      var stock={"ticker":symbol,"open":{"data":parseFloat(obj['1a. open (INR)']).toFixed(2),"ud":ud[0]},"close":{"data":parseFloat(obj['4a. close (INR)']).toFixed(2),"ud":ud[3]},"high":{"data":parseFloat(obj['2a. high (INR)']).toFixed(2),"ud":ud[1]},"low":{"data":parseFloat(obj['3a. low (INR)']).toFixed(2),"ud":ud[2]}};
                       if(ud[3] == true){
                           up["stocks"].push(stock);
                       }else{
@@ -377,8 +377,8 @@ app.get('/loggedin',function(req,res){
                   if (err) throw err;
                   obj = JSON.parse(data);
                   var symbol=obj["Meta Data"]["2. Symbol"]; 
-                  var date=obj["Meta Data"]["3. Last Refreshed"];
-                  obj=obj["Time Series (Daily)"];
+                  var date=obj["Meta Data"]["6. Last Refreshed"];
+                  obj=obj["Time Series (Digital Currency Daily)"];
                   var count=0;
                   var obj2;
                   for(var date2 in obj){
@@ -390,12 +390,12 @@ app.get('/loggedin',function(req,res){
                   }                  
                   obj=obj[date];
                   var up;
-                  if(obj['4. close'] > obj2['4. close']){
+                  if(obj['4a. close (INR)'] > obj2['4a. close (INR)']){
                     up=true;
                   }else{
                     up=false;
                   }
-                  stock.findByUandS(acc,symbol,obj['4. close'],function(data,price){
+                  stock.findByUandS(acc,symbol,obj['4a. close (INR)'],function(data,price){
                       total+=data.quantity;
                       var stocker={"ticker":data.ticker,"quantity":data.quantity,"value":parseFloat(price*data.quantity).toFixed(2),"up": up};
                       stocks["stocks"].push(stocker);

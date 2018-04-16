@@ -1,5 +1,5 @@
 {
-  "name": "StockWatch",
+  "name": "CryptoTracker",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,15 +8,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GauravB159/StockWatch.git"
+    "url": "git+https://github.com/GauravB159/CryptoTracker.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/GauravB159/StockWatch/issues"
+    "url": "https://github.com/GauravB159/CryptoTracker/issues"
   },
-  "homepage": "https://github.com/GauravB159/StockWatch#readme",
+  "homepage": "https://github.com/GauravB159/CryptoTracker#readme",
   "dependencies": {
     "body-parser": "^1.17.1",
     "cron": "^1.2.1",
