@@ -20,15 +20,15 @@ $(document).ready(function(){
         var check2= /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]{8,}/.test($("#password").val());
         if(check1 === true && check2 === true){
             $.post("/register",$("#rg").serialize(), function(data){
-                alert( "User successfully created" );
+                console.log( "User successfully created" );
             }).fail(function(response) {
-                alert(response.responseText);
+                console.log(response.responseText);
               });
         }else{
             if(check1 === false){
-                alert("Enter a valid email address, please.");
+                console.log("Enter a valid email address, please.");
             }else{
-                alert("Enter a strong enough password");
+                console.log("Enter a strong enough password");
             }
         }
     }); 

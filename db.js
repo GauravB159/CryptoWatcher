@@ -37,7 +37,7 @@ userSchema.methods.create = function(uname,pwd,eml,blnc){
       username: uname,
       password: pwd,
       email:eml,
-      balance:blnc
+      balance:0
     });
     temp.save(function(err) {
       if (err) throw err;

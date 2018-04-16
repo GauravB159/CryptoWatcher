@@ -19,13 +19,6 @@ var CronJob = require('cron').CronJob;
 var interval=60;
 var ticker;
 
-var transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'gbolosta@gmail.com',
-        pass: '6022141517673245'
-    }
-});
 
 var check = function(acc,res){
     if(acc == undefined){
@@ -64,77 +57,6 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(__dirname ));
-
-new CronJob('* 5 9  * * 1-5', function() {
-    var tickers=["XELB"];
-    for(ticker in tickers){
-        var url = 'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol='+tickers[ticker]+'&interval=1min&apikey=1977';
-        https.get(url, function(res){
-            var body = '';
-            res.on('data', function(chunk){
-                body += chunk;
-            });
-            res.on('end', function(){
-                var tJson = JSON.parse(body);
-                fs.writeFileSync("temp/"+ticker+'.json', JSON.stringify(tJson));
-                var obj;
-                fs.readFile('temp/'+ticker+".json", 'utf8', function (err, data) {
-                    if (err) throw err;
-                    obj = JSON.parse(data);
-                    var date=obj["Meta Data"]["3. Last Refreshed"];
-                    var symbol=obj["Meta Data"]["2. Symbol"];
-                    var store=parseInt(moment(date).format("DD"));
-                    obj=obj["Time Series (1min)"];
-                    var obj2=obj[date];
-                    var price=obj2["4. close"];
-                    price=parseFloat(price);
-                    for(date in obj){
-                        var check=parseInt(moment(date).format("DD"));
-                        if(store - check == 1 || store - check == 3){
-                            var price2=parseFloat(obj[date]["4. close"]);
-                            var perc=(100)*(price-price2)/price2;
-                            if(perc >= 2.0 || (-1*perc) >= 2.0){
-                                var uod;
-                                if(perc <= -2.0){
-                                    uod="down";
-                                }else{
-                                    uod="up";
-                                }
-                                var message='Your stock given by ticker '+symbol+'has gone '+uod+' by '+perc+' percent.';    
-                                watch.findByTicker(symbol,function(data){
-                                    for(users in data){
-                                        user.findByUsername(data[users].username,function(data){    
-                                            let mailOptions = {
-                                                from: '"Gaurav" <gbolosta@gmail.com>', 
-                                                to: data.email,
-                                                subject: 'Stock fluctuation', 
-                                                text: message
-                                            };
-                                            transporter.sendMail(mailOptions,function(error, info){
-                                                if (error) {
-                                                    console.log(error);
-                                                }
-                                            });
-                                        });
-                                    }
-                                });
-                            }
-                            break;
-                        }
-                    }
-                });        
-            });
-        }).on('error', function(e){
-        console.log("Got an error: ", e);
-        });
-    }
-}, null, true,'America/New_York');
-
-new CronJob('0 0 0 0 0-11 *', function() {
-    db.User.update({},{balance:5000},{multi:true});
-    db.Stock.remove({});
-    db.History.remove({});
-}, null, true,'America/New_York');
 
 
 passport.use(new LocalStrategy(
@@ -245,7 +167,7 @@ app.post('/buy',function(req,res){
     if(checker == false){
         hold.send("The stock market is closed, please buy when it opens");
     }else{
-        var url = 'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol='+ticker+'&interval=1min&apikey=1977';
+        var url = 'https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_INTRADAY&symbol='+ticker+'&market=INR&apikey=1977';
         https.get(url, function(res){
             var body = '';
             res.on('data', function(chunk){
@@ -263,27 +185,21 @@ app.post('/buy',function(req,res){
                  var price=obj["4. close"];
                  price=parseFloat(price);
                  user.findByUsername(acc,function(data){
-                    var balance=parseFloat(data.balance);
-                    if(price*qty > balance){
-                        hold.status(305);
-                        hold.send("You do not have sufficient balance");
-                    }else{
-                        balance=balance-price*qty;
-                        balance=parseFloat(balance).toFixed(2);
-                        user.updateBalance(acc,balance);
-                        var date=moment().format("YYYY-MM-DD HH:mm:ss");
-                        history.create(ticker,acc,price,qty,date,"Bought");
-                        stock.findByUandS(acc,ticker,obj['close'],function(data,price){
-                            if(data == null){
-                                stock.create(acc,ticker,qty);
-                            }else{
-                                var cqty=data.quantity;
-                                qty=cqty+qty;
-                                stock.updateByUandS(acc,ticker,qty)
-                            }
-                        });
-                        hold.send("Stocks bought successfully, your new balance is " + balance);
-                    }
+                    balance=balance+price*qty;
+                    balance=parseFloat(balance).toFixed(2);
+                    user.updateBalance(acc,balance);
+                    var date=moment().format("YYYY-MM-DD HH:mm:ss");
+                    history.create(ticker,acc,price,qty,date,"Bought");
+                    stock.findByUandS(acc,ticker,obj['close'],function(data,price){
+                        if(data == null){
+                            stock.create(acc,ticker,qty);
+                        }else{
+                            var cqty=data.quantity;
+                            qty=cqty+qty;
+                            stock.updateByUandS(acc,ticker,qty)
+                        }
+                    });
+                    hold.send("Crypto bought successfully, your new balance is " + balance)
                 });
             });        
         });
@@ -305,7 +221,7 @@ app.post('/sell',function(req,res){
     if(checker == false){
         hold.send("The stock market is closed, please sell when it opens");
     }else{
-        var url = 'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol='+ticker+'&interval=1min&apikey=1977';
+        var url = 'https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_INTRADAY&symbol='+ticker+'&market=INR&apikey=1977';
         https.get(url, function(res){
             var body = '';
             res.on('data', function(chunk){
@@ -324,7 +240,7 @@ app.post('/sell',function(req,res){
                  price=parseFloat(price);
                  user.findByUsername(acc,function(data){
                     var balance=parseFloat(data.balance);
-                    balance=balance+price*qty;
+                    balance=balance-price*qty;
                     balance=parseFloat(balance).toFixed(2);
                     stock.findByUandS(acc,ticker,obj['4. close'],function(data,price){
                         if(data == null){
@@ -395,7 +311,7 @@ app.get('/watchlist',function(req,res,next){
         }else{
             for(var i=0;i < user.length;i++){
                 var ticker=user[i].ticker;
-                var url = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol='+ticker+'&apikey=1977';
+                var url = 'https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY&symbol='+ticker+'&market=INR&apikey=1977';
                 var check = writeStock(url,"daily/"+ticker);
                 var obj;
                 fs.readFile('daily/'+ticker+".json", 'utf8', function (err, data) {
@@ -454,7 +370,7 @@ app.get('/loggedin',function(req,res){
         var total=0;
         for(var i=0;i < users.length;i++){
             var ticker=users[i].ticker;
-            var url = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol='+ticker+'&apikey=1977';
+            var url = 'https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY&symbol='+ticker+'&market=INR&apikey=1977';
             writeStock(url,"daily/"+ticker);
             var obj;
             fs.readFile('daily/'+ticker+".json", 'utf8', function (err, data) {
@@ -523,7 +439,7 @@ app.post('/register',function(req,res){
         db.User.find({$or : [{username:uname},{email:eml}]}, function(err, data) {
           if (err) throw err;
           if(data == "" && pass == cpass){
-              user.create(uname,pass,eml,5000);
+              user.create(uname,pass,eml,0);
               res.sendFile('index.html', { root: __dirname} );
           }else if(data != ""){
               user.findByUsername(uname,function(data){
@@ -551,14 +467,14 @@ app.post('/login',
 app.post('/time',function(req, res){ 
       var body = req.body;
       interval=body.number;
-      var url = 'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol='+ticker+'&interval='+interval+'min&apikey=1977';
-      var url2 = 'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol='+ticker+'&apikey=1977';
-      var url3 = 'https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY&symbol='+ticker+'&apikey=1977';
-      var url4 = 'https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY&symbol='+ticker+'&apikey=1977';
+      var url = 'https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY&symbol='+ticker+'&market=INR&apikey=1977';
+      var url2 = 'https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY&symbol='+ticker+'&market=INR&apikey=1977';
+      var url3 = 'https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_WEEKLY&symbol='+ticker+'&market=INR&apikey=1977';
+      var url4 = 'https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_MONTHLY&symbol='+ticker+'&market=INR&apikey=1977';
       var check = writeStock(url,"interval",function(check){
           if(check == false){
               res.status(400);
-              res.send("The entered stock ticker does not exist in out database");
+              res.send("The entered cryptocurrency does not exist in out database");
           }else{
               writeStock(url2,"daily/"+ticker);
               writeStock(url3,"weekly");    

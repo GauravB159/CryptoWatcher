@@ -1,10 +1,11 @@
 $(document).ready(function(){
     var valid=true;
-    var ticker="GOOG";   
+    var ticker="";   
     var interval="60";
+    console.log("LOADED");
     $.get('/ticker',function(data){
         ticker=data;
-        $(".ticker").html(ticker);
+        $(".ticker").html( ticker+$(".ticker").html());
     });
     var correct=function(date,minim,maxim,incr){
         if(parseInt(moment(date).hours()) > maxim){
@@ -21,63 +22,68 @@ $(document).ready(function(){
             $.getJSON("../daily/"+ticker+".json",function(daily){
                 if(data == undefined){
                     counter+=1;
-                    $(caller).click();
                 }else{
-                    var intCheck=data["Meta Data"]["4. Interval"];  
-                    var symbol=data["Meta Data"]["2. Symbol"]; 
-                    var sym2=daily["Meta Data"]["2. Symbol"]; 
-                    var inter=interval+"min";
-                    if(intCheck != inter || symbol != ticker || symbol != sym2){
-                        counter+=1;
-                        $(caller).click();
-                    }else{
-                        var date=data["Meta Data"]["3. Last Refreshed"];
-                        counter=0;
-                        var stock=data["Time Series ("+ interval.toString() +"min)"][date.toString()];
-                        var comp=moment(date);
-                        comp=form(comp,'YYYY-MM-DD');
-                        comp=moment(comp).subtract(1,'days');  
-                        while(true){
-                            comp=form(comp,'YYYY-MM-DD');
-                            if(daily["Time Series (Daily)"][comp.toString()] == undefined){
-                                comp=moment(comp).subtract(1,'days');  
-                            }else{
-                                break;
-                            }
-                        }          
-                        comp=form(comp,'YYYY-MM-DD');
-                        $('.data').removeClass('green');
-                        $('.data').removeClass('red');            
-                        var stock2=daily["Time Series (Daily)"][comp.toString()];
-                        for(var property in stock2){
-                            var curr=setUpOrDown(stock,stock2,property);
-                            var cls=property.slice(3,property.length);
-                            var val=(100.0*curr).toFixed(2);
-                            if(cls=="close"){
-                                cls="cl";
-                            }
-                            $('.'+cls).html("("+val+"%)");
-                            if(val > 0.0){
-                                $('.'+cls).addClass('green');
-                                if(cls=="cl"){
-                                    $('.ticker').html($('.ticker').html()+"<span class='green'><span class='glyphicon glyphicon-chevron-up'></span>"+"("+val+"%)"+"</span>");       
-                                }
-                            }else{
-                                $('.'+cls).addClass('red');
-                                if(cls=="cl"){
-                                    $('.ticker').html($('.ticker').html()+" <span class='red'><span class='glyphicon glyphicon-chevron-down'></span>"+"("+val+"%)"+"</span>");    
-                                }                       
-                            }
-                        }
-                        date=moment(date).add(570, 'minutes');
-                        date=form(date,'YYYY-MM-DD HH:mm:ss');
-                        $('.date').html(date.toString() + " IST");
-                        $('.open').html(parseFloat(stock["1. open"]).toFixed(2)+$('.open').html());
-                        $('.high').html(parseFloat(stock["2. high"]).toFixed(2)+$('.high').html());
-                        $('.low').html(parseFloat(stock["3. low"]).toFixed(2)+$('.low').html());
-                        $('.cl').html(parseFloat(stock["4. close"]).toFixed(2)+$('.cl').html());
-                        $('.volume').html(stock["5. volume"]+$('.volume').html());
+                    console.log(data);
+                    var intCheck=data["Meta Data"]["6. Interval"];  
+                    var symbol=data["Meta Data"]["2. Digital Currency Code"]; 
+                    var sym2=daily["Meta Data"]["2. Digital Currency Code"]; 
+                    var inter="5min";                    
+                    var date=data["Meta Data"]["7. Last Refreshed"];
+                    if(!date){
+                        date = data["Meta Data"]["6. Last Refreshed"].split(' ')[0];
                     }
+                    counter=0;
+                    var stock=data["Time Series (Digital Currency Intraday)"]
+                    if(!stock){
+                        stock = data["Time Series (Digital Currency Daily)"][date.toString()];
+                    }
+                    console.log(stock,'....');
+                    
+                    var comp=moment(date);
+                    comp=form(comp,'YYYY-MM-DD');
+                    comp=moment(comp).subtract(1,'days');  
+                    while(true){
+                        comp=form(comp,'YYYY-MM-DD');
+                        if(daily["Time Series (Digital Currency Daily)"][comp.toString()] == undefined){
+                            comp=moment(comp).subtract(1,'days');  
+                        }else{
+                            break;
+                        }
+                    }          
+                    comp=form(comp,'YYYY-MM-DD');
+                    $('.data').removeClass('green');
+                    $('.data').removeClass('red');            
+                    var stock2=daily["Time Series (Digital Currency Daily)"][comp.toString()];
+                    for(var property in stock2){
+                        var curr=setUpOrDown(stock,stock2,property);
+                        var cls=property.split(' ')[1];
+                        var val=(100.0*curr).toFixed(2);
+                        console.log(property.split(' '));
+                        
+                        if(cls=="close"){
+                            cls="cl";
+                        }
+                        $('.'+cls).html("("+val+"%)");
+                        if(val > 0.0){
+                            $('.'+cls).addClass('green');
+                            if(cls=="cl"){
+                                $('#cval').html("<span class='green'><span class='glyphicon glyphicon-chevron-up'></span>"+"("+val+"%)"+"</span>");       
+                            }
+                        }else{
+                            $('.'+cls).addClass('red');
+                            if(cls=="cl"){
+                                $('#cval').html("<span class='red'><span class='glyphicon glyphicon-chevron-down'></span>"+"("+val+"%)"+"</span>");    
+                            }                       
+                        }
+                    }
+                    date=moment(date).add(570, 'minutes');
+                    date=form(date,'YYYY-MM-DD HH:mm:ss');
+                    $('.date').html(date.toString() + " IST");
+                    $('.open').html(parseFloat(stock["1a. open (INR)"]).toFixed(2)+$('.open').html());
+                    $('.high').html(parseFloat(stock["2a. high (INR)"]).toFixed(2)+$('.high').html());
+                    $('.low').html(parseFloat(stock["3a. low (INR)"]).toFixed(2)+$('.low').html());
+                    $('.cl').html(parseFloat(stock["4a. close (INR)"]).toFixed(2)+$('.cl').html());
+                    $('.volume').html(parseFloat(stock["5. volume"]).toFixed(2)+$('.volume').html());
                 }
             });
         }
@@ -90,53 +96,50 @@ $(document).ready(function(){
         var interval= $(this).html();
         if(interval != "Daily" && interval != "Weekly" && interval != "Monthly"){
             $(".data").html("");
-            $(".ticker").html(ticker);
+            $(".ticker").html(ticker+ $(".ticker").html());
             if(counter == 0){
                 $.post('/time', {number:interval},function(){
                     valid = true;
                 }).fail(function(response){
-                    alert(response.responseText);
+                    console.log(response.responseText);
                     valid = false;
                 });
             }
             $.getJSON("../interval.json", wrapper(interval,this));
         }
     });
-    if(width > 768){
-        $('.sixty').click();
-    }else{
-        $('.sixtymob').click();
-    }
     $(".watch").click(function(){
         if(valid == true){
             $.post("/watch",{ticker:ticker}, function(data){
                 $(".watch").toggleClass("hide");
                 $(".unwatch").toggleClass("hide");
-                alert( "Stock added to watchlist" );
+                console.log( "Stock added to watchlist" );
             }).fail(function(response) {
-                alert(response.responseText);
+                console.log(response.responseText);
               });
         }else{
-            alert("This stock is not available to watch, sorry.");
+            console.log("This stock is not available to watch, sorry.");
         }
     });  
     $(".unwatch").click(function(){
         $.post("/unwatch",{ticker:ticker}, function(data){
             $(".watch").toggleClass("hide");
             $(".unwatch").toggleClass("hide");
-            alert("Stock removed from watchlist");
+            console.log("Stock removed from watchlist");
         }).fail(function(response) {
-            alert(response.responseText);
+            console.log(response.responseText);
           });
     });        
     var form=function(date,dformat){
         var formDate=moment(date).format(dformat);
         return formDate;
     }
-    
+    $('.sixty').click();
     var setUpOrDown=function(one,two,arg){
         var curr=parseFloat(one[arg]);
         var prev=parseFloat(two[arg]);
+        console.log(one,prev);
+        
         return (curr-prev)/prev;
     }
     $('[data-toggle="tooltip"]').tooltip(); 
@@ -166,73 +169,22 @@ $(document).ready(function(){
         var price=$(".cl").html();
         if(valid == true){
             if(price == ""){
-                alert("Price has not loaded yet, please try again after price loads");
+                console.log("Price has not loaded yet, please try again after price loads");
             }else{
                 $.post("/buy",{qty:qty,ticker:ticker}, function(data){
-                    alert(data);
+                    console.log(data);
                 }).fail(function(response) {
-                    alert(response.responseText);
+                    console.log(response.responseText);
                   });
               }
         }else{
-            alert("This stock is not available to buy, sorry.");
+            console.log("This stock is not available to buy, sorry.");
         }
     }); 
-    
-    $('.buymob').click(function(){
-        var qty=prompt("Enter number of stocks to buy: ");
-        var price=$(".cl").html();
-        if(valid == true){ 
-            if(price == ""){
-                alert("Price has not loaded yet, please try again after price loads");
-            }else{
-                $.post("/buy",{qty:qty,ticker:ticker,price:price}, function(data){
-                    alert(data);
-                }).fail(function(response) {
-                    alert(response.responseText);
-                  });
-            }
-         }else{
-            alert("This stock is not available to buy, sorry.");
-         }      
-    });
-    $(document).on('click', '#sells', function(){
-        var qty=$("#qtys").val();
-        var price=$(".cl").html();
-        if(valid == true){
-            if(price == ""){
-                alert("Price has not loaded yet, please try again after price loads");
-            }else{
-                $.post("/sell",{qty:qty,ticker:ticker}, function(data){
-                    alert(data);
-                }).fail(function(response) {
-                    alert(response.responseText);
-                  });
-              }
-         }else{
-            alert("This stock is not available to buy, sorry.");
-         }    
-    }); 
-        
-    $('.sellmob').click(function(){
-        var qty=prompt("Enter number of stocks to sell: ");
-        var price=$(".cl").html();
-        if(valid == true){
-            if(price == ""){
-                alert("Price has not loaded yet, please try again after price loads");
-            }else{
-                $.post("/sell",{qty:qty,ticker:ticker}, function(data){
-                    alert(data);
-                }).fail(function(response) {
-                    alert(response.responseText);
-                  });
-              }
-         }else{
-            alert("This stock is not available to buy, sorry.");
-         }         
-    });
+
     var lastmin;
     var chart = function(data,today,checker){
+        
                 var width1 = (window.innerWidth > 0) ? window.innerWidth : screen.width;
                 if(width1<768){
                     width1=900;
@@ -245,7 +197,7 @@ $(document).ready(function(){
                 }
                 var format="";
                 var yform="";
-                if(checker == true){
+                if(checker == false){
                     format='%Y-%m-%d %H:%M:%S';
                     yform='%H:%M';
                 }else{
@@ -260,11 +212,13 @@ $(document).ready(function(){
                         hold=moment(val).format("YYYY-MM-DD");
                     }
                     col1[0].push(hold);
-                    col1[1].push(data[val]["1. open"]);
-                    col1[2].push(data[val]["2. high"]);
-                    col1[3].push(data[val]["3. low"]);
-                    col1[4].push(data[val]["4. close"]);
+                    col1[1].push(data[val]["1a. open (INR)"]);
+                    col1[2].push(data[val]["2a. high (INR)"]);
+                    col1[3].push(data[val]["3a. low (INR)"]);
+                    col1[4].push(data[val]["4a. close (INR)"]);
                 }
+                console.log(col1);
+                
                 var chart = c3.generate({
                 size:{
                     width:width1
@@ -272,7 +226,7 @@ $(document).ready(function(){
                 bindto: '#chart',
                 padding: {
                     right: 20,
-                    left:80,
+                    left:120,
                     top:5
                 },
                 data: {
@@ -304,30 +258,15 @@ $(document).ready(function(){
                 });
             }
     var graphGen=function(val,checker){
-            $.getJSON(val+".json",function(data){
+            $.getJSON("./daily/"+val+".json",function(data){
                 var interval=$('.acti').html();
-                var today=data["Meta Data"]["3. Last Refreshed"];
-                console.log(checker);
-                if(checker == true){
-                    var check=moment().tz("America/Toronto").format('DD');
-                    /*today=today[8]+today[9];
-                    if(check != today){
-                        alert("The stock market was closed today so no intraday data available");
-                        return;
-                    }*/ 
-                    data=data["Time Series ("+interval+"min)"];
-                }else{
-                    if(interval == "Daily"){
-                        data=data["Time Series ("+interval+")"];
-                    }else{
-                        data=data[interval+" Time Series"];
-                    }
-                }
-                chart(data,today,checker);
+                var today=data["Meta Data"]["6. Last Refreshed"].split(' ')[0];
+                let dat=data["Time Series (Digital Currency Daily)"];
+                chart(dat,today,true);
             }); 
         }
     $(".graph").click(function(){
-        graphGen("interval",true);
+        graphGen(ticker,true);
         $('.graph').css("border-left","3px solid black");
         $('.bod').toggleClass("hidden");
         $('.sh').toggleClass("hidden");
@@ -345,7 +284,7 @@ $(document).ready(function(){
     $(".ibcl").click(function(){
         lastmin=$(this);
         if($(this).hasClass("checker")){
-            graphGen("interval",true);
+            graphGen(ticker,true);
         }
     });
     $(".sh").click(function(){

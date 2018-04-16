@@ -162,7 +162,7 @@ body {
   font-family: "Montserrat", sans-serif;
   background-color: rgba(0, 0, 0, 0.8);
   border: none;
-  width: 60%; }
+  width: 0%; }
 
 .btn, .bttn {
   border-radius: 0;
