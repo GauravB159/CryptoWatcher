@@ -171,6 +171,8 @@ $(document).ready(function(){
             if(price == ""){
                 console.log("Price has not loaded yet, please try again after price loads");
             }else{
+                console.log(qty,ticker);
+                
                 $.post("/buy",{qty:qty,ticker:ticker}, function(data){
                     console.log(data);
                 }).fail(function(response) {

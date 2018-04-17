@@ -160,7 +160,7 @@ app.post('/buy',function(req,res){
     var ticker=req.body.ticker;
     check(req.session.passport,res);
     var acc=req.session.passport.user.username;    
-    qty=parseInt(qty);
+    qty=parseFloat(qty);
     var hold=res;
     //var check = timeCheck();
     var checker = true;
@@ -180,11 +180,12 @@ app.post('/buy',function(req,res){
             fs.readFile('daily/'+ticker+".json", 'utf8', function (err, data) {
                  if (err) throw err;
                  obj = JSON.parse(data);
-                 var date=obj["Meta Data"]["6. Last Refreshed"];
+                 var date=obj["Meta Data"]["6. Last Refreshed"].split(' ')[0];
                  obj=obj["Time Series (Digital Currency Daily)"][date];
                  var price=obj["4a. close (INR)"];
                  price=parseFloat(price);
                  user.findByUsername(acc,function(data){
+                    var balance=parseFloat(data.balance);
                     balance=balance+price*qty;
                     balance=parseFloat(balance).toFixed(2);
                     user.updateBalance(acc,balance);
@@ -214,7 +215,7 @@ app.post('/sell',function(req,res){
     var ticker=req.body.ticker;
     check(req.session.passport,res);
     var acc=req.session.passport.user.username;    
-    qty=parseInt(qty);
+    qty=parseFloat(qty);
     var hold=res;
     //var check = timeCheck();
     var checker = true;
@@ -235,7 +236,7 @@ app.post('/sell',function(req,res){
                  if (err) throw err;
                  obj = JSON.parse(data);
                  var date=obj["Meta Data"]["6. Last Refreshed"];
-                 obj=obj["Time Series (Digital Currency Daily)"][date];
+                 obj=obj["Time Series (Digital Currency Daily)"][date].split(' ')[0];
                  var price=obj["4a. close (INR)"];
                  price=parseFloat(price);
                  user.findByUsername(acc,function(data){
@@ -317,8 +318,10 @@ app.get('/watchlist',function(req,res,next){
                 fs.readFile('daily/'+ticker+".json", 'utf8', function (err, data) {
                       if (err) throw err;
                       obj = JSON.parse(data);
-                      var symbol=obj["Meta Data"]["2. Symbol"]; 
-                      var date=obj["Meta Data"]["6. Last Refreshed"];
+                      console.log(obj["Meta Data"]);
+                      
+                      var symbol=obj["Meta Data"]["2. Digital Currency Code"]; 
+                      var date=obj["Meta Data"]["6. Last Refreshed"].split(' ')[0];
                       obj=obj["Time Series (Digital Currency Daily)"];
                       var count=0;
                       var obj2;
@@ -330,6 +333,8 @@ app.get('/watchlist',function(req,res,next){
                           count+=1;
                       }                  
                       obj=obj[date];
+                      console.log(obj,date);
+                      
                       ud=[];
                       for(var price in obj){
                           if(obj[price]-obj2[price] > 0){
@@ -339,6 +344,8 @@ app.get('/watchlist',function(req,res,next){
                           }
                       }
                       var stock={"ticker":symbol,"open":{"data":parseFloat(obj['1a. open (INR)']).toFixed(2),"ud":ud[0]},"close":{"data":parseFloat(obj['4a. close (INR)']).toFixed(2),"ud":ud[3]},"high":{"data":parseFloat(obj['2a. high (INR)']).toFixed(2),"ud":ud[1]},"low":{"data":parseFloat(obj['3a. low (INR)']).toFixed(2),"ud":ud[2]}};
+                      console.log(stock);
+                      
                       if(ud[3] == true){
                           up["stocks"].push(stock);
                       }else{
@@ -376,8 +383,8 @@ app.get('/loggedin',function(req,res){
             fs.readFile('daily/'+ticker+".json", 'utf8', function (err, data) {
                   if (err) throw err;
                   obj = JSON.parse(data);
-                  var symbol=obj["Meta Data"]["2. Symbol"]; 
-                  var date=obj["Meta Data"]["6. Last Refreshed"];
+                  var symbol=obj["Meta Data"]["2. Digital Currency Code"]; 
+                  var date=obj["Meta Data"]["6. Last Refreshed"].split(' ')[0];
                   obj=obj["Time Series (Digital Currency Daily)"];
                   var count=0;
                   var obj2;
